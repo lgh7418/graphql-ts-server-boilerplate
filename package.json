@@ -5,6 +5,7 @@
   "devDependencies": {
     "@types/jest": "^26.0.9",
     "@types/node": "^14.0.27",
+    "@types/yup": "^0.29.4",
     "gql2ts": "^1.10.1",
     "jest": "^26.4.0",
     "ts-jest": "^26.2.0",
@@ -30,13 +31,12 @@
     "reflect-metadata": "^0.1.13",
     "type-graphql": "^1.0.0-rc.3",
     "typeorm": "0.2.25",
-    "uuid": "^8.3.0"
+    "yup": "^0.29.3"
   },
   "scripts": {
     "start": "set NODE_ENV=development&&nodemon --exec ts-node src/index.ts",
-    "test-server": "set NODE_ENV=test&&ts-node src/index.ts",
-    "test": "jest",
-    "generate": "gql2ts src/schema.graphql -o src/types/schema.d.ts"
+    "test": "set NODE_ENV=test&&jest --forceExit",
+    "generate": "gql2ts src/modules/register/schema.graphql -o src/types/schema.d.ts"
   },
   "jest": {
     "transform": {
