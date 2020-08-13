@@ -1,19 +1,15 @@
 import "reflect-metadata";
 import { GraphQLServer } from "graphql-yoga";
-// ... or using `require()`
-// const { GraphQLServer } = require('graphql-yoga')
+import { loadFilesSync } from "@graphql-tools/load-files";
+import { mergeTypeDefs } from "@graphql-tools/merge";
 
-const typeDefs = `
-  type Query {
-    hello(name: String): String!
-  }
-`;
+import { resolvers } from "./resolvers";
+import { createConnection } from "typeorm";
 
-const resolvers = {
-  Query: {
-    hello: (_: any, { name }: any) => `Hello ${name || "World"}`,
-  },
-};
+const loadedFiles = loadFilesSync(`${__dirname}/*.graphql`);
+const typeDefs = mergeTypeDefs(loadedFiles);
 
 const server = new GraphQLServer({ typeDefs, resolvers });
-server.start(() => console.log("Server is running on localhost:4000"));
+createConnection().then(() => {
+  server.start(() => console.log("Server is running on localhost:4000"));
+});
