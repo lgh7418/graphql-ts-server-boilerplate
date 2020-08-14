@@ -31,7 +31,6 @@ const mutation = (e: string, p: string) => gql`
 
 describe("Register user", async () => {
   it("should register a valid user", async () => {
-    console.log(getHost());
     const response = await request(getHost(), mutation(email, password));
     expect(response).toEqual({ register: null });
 
