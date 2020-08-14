@@ -1,9 +1,14 @@
 import { GraphQLServer } from "graphql-yoga";
 import { loadFilesSync } from "@graphql-tools/load-files";
 import { mergeTypeDefs, mergeResolvers } from "@graphql-tools/merge";
+import * as session from "express-session";
+import * as connectRedis from "connect-redis";
 import { createTypeormConn } from "./utils/createTypeormConn";
 import { User } from "./entity/User";
 import { redis } from "./redis";
+
+const SESSION_SECRET = "ajslkjalksjdfkl";
+const RedisStore = connectRedis(session);
 
 export const startServer = async () => {
   const typeDefs = mergeTypeDefs(
@@ -19,8 +24,26 @@ export const startServer = async () => {
     context: ({ request }) => ({
       redis,
       url: request.protocol + "://" + request.get("host"),
+      session: request.session,
     }),
   });
+
+  server.express.use(
+    session({
+      store: new RedisStore({
+        client: redis as any,
+      }),
+      name: "qid",
+      secret: SESSION_SECRET,
+      resave: false,
+      saveUninitialized: true,
+      cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      },
+    })
+  );
 
   server.express.get("/confirm/:id", async (req, res) => {
     const { id } = req.params;

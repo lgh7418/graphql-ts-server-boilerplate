@@ -1,9 +1,11 @@
 type Query {
+  bye2: String
   bye: String
   hello(name: String): String!
 }
 
 type Mutation {
+  login(email: String!, password: String!): [Error!]
   register(email: String!, password: String!): [Error!]
 }
 
