@@ -7,6 +7,8 @@
     "@types/jest": "^26.0.9",
     "@types/node": "^14.0.27",
     "@types/yup": "^0.29.4",
+    "babel-runtime": "^6.26.0",
+    "gql-merge": "^0.0.6",
     "gql2ts": "^1.10.1",
     "jest": "^26.4.0",
     "ts-jest": "^26.2.0",
@@ -16,11 +18,13 @@
     "typescript": "3.9.7"
   },
   "dependencies": {
+    "@gql2ts/from-schema": "^2.0.0-4",
     "@graphql-tools/graphql-file-loader": "^6.0.18",
     "@graphql-tools/load": "^6.0.18",
     "@graphql-tools/load-files": "^6.0.18",
     "@graphql-tools/merge": "^6.0.18",
     "@graphql-tools/schema": "^6.0.18",
+    "@graphql-tools/stitch": "^6.0.18",
     "@types/bcryptjs": "^2.4.2",
     "@types/uuid": "^8.3.0",
     "bcrypt": "^5.0.0",
@@ -39,7 +43,8 @@
   "scripts": {
     "start": "set NODE_ENV=development&&nodemon --exec ts-node src/index.ts",
     "test": "set NODE_ENV=test&&jest --forceExit",
-    "generate": "gql2ts src/modules/register/schema.graphql -o src/types/schema.d.ts"
+    "pretypes": "gql-merge --out-file ./src/schema.graphql ./src/modules/**/*.graphql",
+    "types": "gql2ts src/schema.graphql -o src/types/schema.d.ts"
   },
   "jest": {
     "transform": {
