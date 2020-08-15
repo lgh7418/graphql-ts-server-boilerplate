@@ -1,9 +1,13 @@
-# import Error from "../../shared.graphql"
-
 type Query {
   bye2: String
 }
 
+type loginResponse {
+  ok: Boolean!
+  message: String
+  token: String
+}
+
 type Mutation {
-  login(email: String!, password: String!): [Error!]
+  login(email: String!, password: String!): loginResponse!
 }

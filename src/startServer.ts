@@ -1,65 +1,49 @@
 import { GraphQLServer } from "graphql-yoga";
-import { loadFilesSync } from "@graphql-tools/load-files";
-import { mergeTypeDefs, mergeResolvers } from "@graphql-tools/merge";
-import * as session from "express-session";
-import * as connectRedis from "connect-redis";
 import { createTypeormConn } from "./utils/createTypeormConn";
-import { User } from "./entity/User";
-import { redis } from "./redis";
-
-const SESSION_SECRET = "ajslkjalksjdfkl";
-const RedisStore = connectRedis(session);
+import schema from "./schema";
+import { confirmEmail } from "./routes/confirmEmail";
+import { jwt } from "./middlewares";
+import decodeJWT from "./utils/decodeJWT";
 
 export const startServer = async () => {
-  const typeDefs = mergeTypeDefs(
-    loadFilesSync(`${__dirname}/modules/**/*.graphql`)
-  );
-  const resolvers = mergeResolvers(
-    loadFilesSync(`${__dirname}/modules/**/resolvers.ts`)
-  );
-
   const server = new GraphQLServer({
-    typeDefs,
-    resolvers,
-    context: ({ request }) => ({
-      redis,
-      url: request.protocol + "://" + request.get("host"),
-      session: request.session,
-    }),
+    schema,
+    context: (req) => {
+      return { req: req.request };
+    },
   });
 
-  server.express.use(
-    session({
-      store: new RedisStore({
-        client: redis as any,
-      }),
-      name: "qid",
-      secret: SESSION_SECRET,
-      resave: false,
-      saveUninitialized: true,
-      cookie: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-      },
-    })
-  );
+  const cors = {
+    credentials: true,
+    origin:
+      process.env.NODE_ENV === "development"
+        ? "*"
+        : (process.env.PRONTEND_HOST as string),
+  };
 
-  server.express.get("/confirm/:id", async (req, res) => {
-    const { id } = req.params;
-    const userId = await redis.get(id);
-    if (userId) {
-      await User.update({ id: userId }, { confirmed: true });
-      res.send("ok");
-    } else {
-      res.send("invalid");
-    }
-  });
+  server.express.use(jwt);
+
+  server.express.get("/confirm/:id", confirmEmail);
 
   await createTypeormConn();
   const port = process.env.NODE_ENV === "test" ? 0 : 4000;
   const app = await server.start({
+    cors,
     port,
+    subscriptions: {
+      onConnect: async (connectionParams: any) => {
+        const token = connectionParams["X-JWT"];
+        if (token) {
+          const user = await decodeJWT(token);
+          if (user) {
+            return {
+              currentUser: user,
+            };
+          }
+        }
+        throw new Error("No JWT.");
+      },
+    },
   });
   console.log(`Server is running on localhost:${port}`);
 
